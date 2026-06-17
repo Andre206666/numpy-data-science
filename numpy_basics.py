@@ -73,3 +73,65 @@ print(df.mean(axis=1))
 
 df["average"] = df.mean(axis=1)
 print(df[df["average"] > 7])
+
+
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sales = np.array([
+    [10, 15, 20, 25, 30, 35],
+    [5,  8,  12, 15, 20, 25],
+    [30, 25, 20, 15, 10, 5],
+    [8,  10, 12, 14, 16, 18],
+])
+
+df = pd.DataFrame(sales,
+                  columns=["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                  index=["Product A", "Product B", "Product C", "Product D"])
+print(df)
+
+print("Total sales per product:", df.sum(axis=1))
+
+print("Average per month:", df.mean(axis=0))
+
+print("Best month:", df.sum(axis=0).idxmax())
+
+print("Best product:", df.sum(axis=1).idxmax())
+
+sns.heatmap(df, annot=True, cmap="YlGnBu")
+plt.title("Monthly Sales Heatmap")
+plt.show()
+
+scores = np.array([
+    [85, 90, 78, 92],
+    [70, 65, 80, 75],
+    [95, 88, 92, 96],
+    [60, 55, 65, 70],
+    [78, 82, 75, 80],
+    [88, 91, 85, 93],
+])
+
+df = pd.DataFrame(scores, columns=["Math", "Science", "English", "History"],
+                  index=["Diego", "Maria", "Carlos", "Ana", "Luis", "Sofia"])
+print(df)
+df["average"] = df.mean(axis=1)
+print(df)
+df["passed"] = df["average"].apply(lambda x: "Yes" if x > 75 else "No")
+print(df)
+
+print("Top student:", df["average"].idxmax())
+
+sns.barplot(data=df.reset_index(), x="index", y="average")
+plt.title("Average score per students")
+plt.xlabel("Student")
+plt.ylabel("Passed")
+plt.show()
+
+sns.heatmap(df[["Math", "Science", "English", "History", "average"]],
+            annot=True, cmap="YlGnBu", vmin=50, vmax=100)
+plt.title("All exam scores")
+plt.show()
+plt.title("all exams score")
+plt.show()
