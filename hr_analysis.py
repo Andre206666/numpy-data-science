@@ -19,7 +19,7 @@ df = pd.DataFrame(data)
 print(df.describe())
 
 print(df.groupby("department")["salary"].mean())
-
+print(df.groupby("age")["salary"].mean())
 sns.heatmap(df[["age", "salary", "experience", "satisfaction"]].corr(), annot=True, cmap="coolwarm")
 plt.title("Age vs Salary")
 plt.show()
