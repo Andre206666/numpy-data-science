@@ -97,3 +97,5 @@ print(f"Accuracy: {model_diabetes.score(X_test, y_test):.2f}")
 
 print(model_diabetes.predict([[45, 30]]))
 print(model_diabetes.predict([[30, 20]]))
+
+
