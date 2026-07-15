@@ -38,3 +38,6 @@ importance = pd.DataFrame({
     "importance": rf.feature_importances_
 })
 print(importance)
+
+print(rf.predict([[6, 148, 72, 0.627, 50]]))
+print(rf.predict([[1, 85, 66, 0.351, 31]]))
