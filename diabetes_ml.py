@@ -15,6 +15,8 @@ y = df["Outcome"]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+
+
 rf = RandomForestClassifier()
 rf.fit(X_train, y_train)
 print(f"RF: {accuracy_score(y_test, rf.predict(X_test)):.2f}")
@@ -22,6 +24,10 @@ print(f"RF: {accuracy_score(y_test, rf.predict(X_test)):.2f}")
 lr = LogisticRegression(max_iter=1000)
 lr.fit(X_train, y_train)
 print(f"LR: {accuracy_score(y_test, lr.predict(X_test)):.2f}")
+
+dt = DecisionTreeClassifier()
+dt.fit(X_train, y_train)
+print(f"DT: {accuracy_score(y_test, dt.predict(X_test)):.2f}")
 
 accuracy = accuracy_score(y_test, lr.predict(X_test))
 print(f"Accuracy: {accuracy}")
