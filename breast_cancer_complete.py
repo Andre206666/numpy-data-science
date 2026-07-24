@@ -17,8 +17,7 @@ print(X.describe())
 print(X.shape)
 
 plt.figure(figsize=(12, 10))
-sns.heatmap(X.corr, annot=True, cmap="coolwarm", fmt="G")
-plt.title("Heatmap")
+sns.heatmap(X.corr(), annot=True, cmap="coolwarm", fmt=".1f")
 plt.show()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
