@@ -50,7 +50,7 @@ print(classification_report(y_test, predictions))
 
 importance = pd.DataFrame({
     "feature": X.columns,
-    "importance": best_model.feature_importance()
+    "importance": best_model.feature_importances_
 }).sort_values("importance", ascending=False)
 
 sns.barplot(data=importance, x="feature", y="importance")
