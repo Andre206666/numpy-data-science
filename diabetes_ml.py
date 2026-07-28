@@ -1,42 +1,40 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
-df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/diabetes.csv")
-print(df.head())
-print(df.isnull().sum())
+url = "https://raw.githubusercontent.com/plotly/datasets/master/diabetes.csv"
+df = pd.read_csv(url)
 
-X = df[["Pregnancies", "Glucose", "BloodPressure", "DiabetesPedigreeFunction", "Age"]]
+X = df.drop("Outcome", axis=1)
 y = df["Outcome"]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
+print("--- Baseline Model Cross-Validation ---")
+for name, model in [
+    ("LR", LogisticRegression(max_iter=1000)),
+    ("DT", DecisionTreeClassifier(random_state=42)),
+    ("RF", RandomForestClassifier(random_state=42)),
+]:
+    scores = cross_val_score(model, X_train, y_train, cv=5)
+    print(f"{name}: {scores.mean():.2f} ± {scores.std():.2f}")
 
+print("\n--- Tuning Random Forest Hyperparameters ---")
+param_grid = {"n_estimators": [50, 100, 200], "max_depth": [3, 5, None]}
 
-rf = RandomForestClassifier()
-rf.fit(X_train, y_train)
-print(f"RF: {accuracy_score(y_test, rf.predict(X_test)):.2f}")
+grid = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
+grid.fit(X_train, y_train)
 
-lr = LogisticRegression(max_iter=1000)
-lr.fit(X_train, y_train)
-print(f"LR: {accuracy_score(y_test, lr.predict(X_test)):.2f}")
+print(f"Best Params: {grid.best_params_}")
 
-dt = DecisionTreeClassifier()
-dt.fit(X_train, y_train)
-print(f"DT: {accuracy_score(y_test, dt.predict(X_test)):.2f}")
+best_model = grid.best_estimator_
+y_pred = best_model.predict(X_test)
 
-accuracy = accuracy_score(y_test, lr.predict(X_test))
-print(f"Accuracy: {accuracy}")
-
-
-importance = pd.DataFrame({
-    "feature": ["Pregnancies", "Glucose", "BloodPressure", "DiabetesPedigreeFunctions", "Age"],
-    "importance": rf.feature_importances_
-})
-print(importance)
-
-print(rf.predict([[6, 148, 72, 0.627, 50]]))
-print(rf.predict([[1, 85, 66, 0.351, 31]]))
+print(f"\nFinal Test Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))

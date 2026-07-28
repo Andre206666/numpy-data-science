@@ -6,6 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import accuracy_score, classification_report
+
+
 
 df = pd.read_csv("https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv")
 print(df.head())
@@ -59,3 +63,15 @@ sns.barplot(data=importance, x="importance", y="feature")
 plt.title("Feature Importance - Titanic")
 plt.show()
 
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+scores = cross_val_score(model, X, y, cv=5)
+print(f"Cross validation scores: {scores}")
+print(f"Mean CV accuracy: {scores.mean():.2f}")
+
+# Step 7 - Predict and evaluate
+predictions = model.predict(X_test)
+print(f"\nTest Accuracy: {accuracy_score(y_test, predictions):.2f}")
+print(classification_report(y_test, predictions))
