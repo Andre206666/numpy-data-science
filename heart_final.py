@@ -37,3 +37,10 @@ print(f"Final Test Accuracy: {accuracy:.4f}\n")
 
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
+
+rf_balanced = RandomForestClassifier(n_estimators=100, max_depth=3, class_weight="balanced")
+rf_balanced.fit(X_train, y_train)
+
+predictions_balanced = rf_balanced.predict(X_test)
+print(f"Balanced accuracy: {accuracy_score(y_test, predictions_balanced):.2f}")
+print(classification_report(y_test, predictions_balanced))
