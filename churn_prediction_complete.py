@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, precision_recall_curve
 
 df = pd.read_csv("https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv")
 
@@ -18,6 +18,15 @@ X = df_encoded.drop(columns=["Churn"])
 y = df_encoded["Churn"]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+X_train = X_train.copy()
+X_test = X_test.copy()
+
+
+print("--- Training Class Distribution Percentages ---")
+print(y_train.value_counts(normalize=True)* 100)
+print("-" * 40)
+
 
 train_mean = X_train["TotalCharges"].mean()
 X_train["TotalCharges"] = X_train["TotalCharges"].fillna(train_mean)
@@ -36,21 +45,17 @@ rf.fit(X_train, y_train)
 print(f"RF: {accuracy_score(y_test, rf.predict(X_test)):.4f}")
 
 best_model = RandomForestClassifier(random_state=42)
-param_grid = {
-    "n_estimators": [50, 100, 200],
-    "criterion": ["gini", "entropy"],
-    "min_samples_split": [2, 5, 10],
-    "min_samples_leaf": [2, 5, 10],
-    "max_features": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-}
 
-grid_search = GridSearchCV(estimator=best_model, param_grid=param_grid, cv=5, scoring="accuracy", n_jobs=-1)
+print("Starting GridSearchCV...")
+
+param_grid = {"n_estimators": [50, 100], "max_depth": [5, 10]}
+grid_search = GridSearchCV(RandomForestClassifier(random_state=42), param_grid=param_grid, cv=3)
 grid_search.fit(X_train, y_train)
 
 print(f"Best parameters: {grid_search.best_params_}")
 print(f"Best score: {grid_search.best_score_}")
 
-final_model = RandomForestClassifier(**grid_search.best_params_, random_state=42)
+final_model = RandomForestClassifier(**grid_search.best_params_, class_weight="balanced", random_state=42)
 final_model.fit(X_train, y_train)
 
 dt_tuned = DecisionTreeClassifier(max_depth=5, random_state=42)
@@ -69,3 +74,16 @@ print(importance.head(10))
 
 print("\nClassification Report:")
 print(classification_report(y_test, voting_model.predict(X_test)))
+
+y_scores = voting_model.predict_proba(X_test)[:, 1]
+print(f"\nSuccesfully calculated y_scores for the Precission-Recall curve:")
+
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+plt.figure(figsize=[6, 8])
+plt.plot(recall, precision, color="blue", linewidth=2)
+plt.title("Precision-Recall curve - Voting Classifier")
+plt.xlabel("Recall")
+plt.ylabel("Precision")
+plt.grid(True)
+plt.show()
