@@ -51,7 +51,6 @@ voting_model.fit(X_train, y_train)
 
 print(f"\nVoting Classifier Accuracy: {accuracy_score(y_test, voting_model.predict(X_test)):.4f}")
 
-# 7. Extract Feature Importances
 importance = pd.DataFrame({
     "feature": X.columns,
     "importance": final_rf.feature_importances_
