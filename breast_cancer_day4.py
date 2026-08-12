@@ -75,3 +75,5 @@ print(f"XGBoost acuuracy {accuracy_score(y_test, predictions)}")
 
 joblib.dump(best_rf, "breast_cancer_day4.pkl")
 print("Model saved!")
+
+print("End")
