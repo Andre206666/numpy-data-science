@@ -3,7 +3,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import seaborn as sns
-from sklearn.metrics import roc_auc_score, RocCurveDisplay
 
 import pandas as pd
 df = pd.read_csv("https://raw.githubusercontent.com/dsrscientist/DSData/master/winequality-red.csv")
@@ -26,5 +25,6 @@ svm2_rbf.fit(X_train, y_train)
 
 predictions = svm2_rbf.predict(X_test)
 print(f"SVM2 Accuracy: {accuracy_score(y_test, predictions)}")
+
 
 
