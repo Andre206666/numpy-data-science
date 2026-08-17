@@ -1,97 +1,86 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import joblib
-
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    precision_recall_curve,
-    fbeta_score,
-    make_scorer
-)
-from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import accuracy_score, precision_recall_curve
+import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
+import joblib
 
 df = pd.read_csv("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/titanic.csv")
 
-df["FamilySize"] = df["sibsp"] + df["parch"] + 1
-df["IsAlone"] = (df["FamilySize"] == 1).astype(int)
+print(df.head())
+print(df.columns)
 
-df["age"] = df["age"].fillna(df["age"].median())
-df["fare"] = df["fare"].fillna(df["fare"].median())
+print(df.shape)
+print(df.isnull().sum())
 
-df = df.drop(columns=["alive", "deck", "embark_town", "who"])
-df = pd.get_dummies(df, columns=["sex", "embarked", "class"], drop_first=True)
+
+df["age"] = df["age"].fillna(df["age"].fillna(df["age"].median()))
+df["embarked"] = df["embarked"].fillna(df["embarked"].mode()[0])
+
+df = df.drop(columns=["deck", "alive", "class", "who", "embark_town", "adult_male"])
+
+df["sex"] = df["sex"].map({"male": 0, "female": 1})
+
+df = pd.get_dummies(df, columns=["embarked"], drop_first=True)
+
+df["alone"] = df["alone"].astype(int)
 
 X = df.drop(columns=["survived"])
 y = df["survived"]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-LR = LogisticRegression(max_iter=1000)
+LR = LogisticRegression()
 LR.fit(X_train, y_train)
-print(f"LR Accuracy: {accuracy_score(y_test, LR.predict(X_test)):.4f}")
+print(f"LR {accuracy_score(y_test, LR.predict(X_test))}")
 
-DT = DecisionTreeClassifier(random_state=42)
+DT = DecisionTreeClassifier()
 DT.fit(X_train, y_train)
-print(f"DT Accuracy: {accuracy_score(y_test, DT.predict(X_test)):.4f}")
+print(f"DT {accuracy_score(y_test, DT.predict(X_test))}")
 
-RF = RandomForestClassifier(random_state=42)
+RF = RandomForestClassifier()
 RF.fit(X_train, y_train)
-print(f"RF Accuracy: {accuracy_score(y_test, RF.predict(X_test)):.4f}")
+print(f"RF {accuracy_score(y_test, RF.predict(X_test))}")
 
 param_grid = {
-    "n_estimators": [50, 120],
+    "n_estimators": [30, 40],
     "max_depth": [None, 30, 50],
-    "min_samples_split": [3, 5, 8]
+    "min_samples_split": [2, 4, 6]
 }
 
 rf_base = RandomForestClassifier(class_weight="balanced", random_state=42)
-f2_scorer = make_scorer(fbeta_score, beta=2)
 
-grid_search = GridSearchCV(estimator=rf_base, param_grid=param_grid, cv=3, scoring=f2_scorer, n_jobs=-1)
+grid_search = GridSearchCV(estimator=RF, param_grid=param_grid, cv=3, scoring="f1", n_jobs=-1)
 grid_search.fit(X_train, y_train)
 
 best_rf = grid_search.best_estimator_
 y_pred = best_rf.predict(X_test)
 
-print(f"\nBest Params: {grid_search.best_params_}")
-print(f"Best RF Accuracy: {accuracy_score(y_test, y_pred):.4f}")
-print(classification_report(y_test, y_pred))
+print(f"Best params {grid_search.best_params_}")
+print(f"Best accuracy {accuracy_score(y_test, y_pred)}")
 
 y_scores = best_rf.predict_proba(X_test)[:, 1]
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
 
 plt.figure(figsize=[8, 6])
-plt.plot(thresholds, precision[:-1], label="Precision", color="blue")
-plt.plot(thresholds, recall[:-1], label="Recall", color="red")
-plt.xlabel("Threshold")
-plt.ylabel("Score")
+plt.plot(recall, precision, label="Precision", color="blue")
+plt.plot(recall, precision, label="Recall", color="red")
+plt.xlabel("Thresholds")
+plt.ylabel("Precision")
 plt.legend()
-plt.title("Precision & Recall vs. Decision Threshold")
-plt.grid(True)
+plt.title("Precision-Recall curve")
 plt.show()
 
-xgboost = XGBClassifier(random_state=42)
+xgboost = XGBClassifier()
 xgboost.fit(X_train, y_train)
-print(f"XGBoost Accuracy: {accuracy_score(y_test, xgboost.predict(X_test)):.4f}")
 
-clf1 = LogisticRegression(max_iter=1000)
-clf2 = RandomForestClassifier(random_state=42)
-clf3 = SVC(probability=True, random_state=42)
+predictions = xgboost.predict(X_test)
 
-ensemble = VotingClassifier(
-    estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)],
-    voting="soft"
-)
+print(f"XGBoost accuracy {accuracy_score(y_test, predictions)}")
 
-ensemble.fit(X_train, y_train)
-predictions = ensemble.predict(X_test)
-print(f"Ensemble Accuracy: {accuracy_score(y_test, predictions):.4f}")
-
-joblib.dump(ensemble, "ensemble.joblib")
-print("Model saved successfully!")
+joblib.dump(best_rf, "titanic_day_4_.pkl")
+print("Model saved")
